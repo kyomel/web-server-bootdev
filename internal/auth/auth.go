@@ -16,6 +16,13 @@ import (
 // ErrNoAuthHeaderIncluded -
 var ErrNoAuthHeaderIncluded = errors.New("not auth header included in request")
 
+type TokenType string
+
+const (
+	//TokenTypeAccess -
+	TokenTypeAccess TokenType = "chirpy-access"
+)
+
 // HashPassword -
 func HashPassword(password string) (string, error) {
 	dat, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -35,7 +42,7 @@ func MakeJWT(userID int, tokenSecret string, expiresIn time.Duration) (string, e
 	signingKey := []byte(tokenSecret)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "chirpy",
+		Issuer:    string(TokenTypeAccess),
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
 		Subject:   fmt.Sprintf("%d", userID),
@@ -67,7 +74,7 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 		return "", err
 	}
 
-	if issuer != string("chirpy") {
+	if issuer != string(TokenTypeAccess) {
 		return "", errors.New("invalid issuer")
 	}
 
